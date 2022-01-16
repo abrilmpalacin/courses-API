@@ -28,7 +28,7 @@ public class SpringFoxConfig {
 	
 	private ApiInfo getApiInfo() {
 		return new ApiInfo(
-				"Course API",
+				"Courses API",
 				"API course provider",
 				"1.0",
 				"https://someURL/terms",
