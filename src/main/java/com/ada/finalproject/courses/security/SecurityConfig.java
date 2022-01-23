@@ -37,7 +37,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 							  "/configuration/security", 
 							  "/swagger-ui.html", 
 							  "/webjars/**"). permitAll()
-				.antMatchers("/api/v1/**").permitAll()
+				.antMatchers("/api/v1/admin/sign-in", 
+							 "/api/v1/clients/sign-up",
+							 "/api/v1/clients/sign-in", 
+							 "/api/v1/companies/sign-up",
+							 "/api/v1/companies/sign-in").permitAll()
+				.antMatchers("/api/v1/admin/**").hasRole("ADMIN")
+				.antMatchers("/api/v1/courses/{([A-z])\\w+}/{([A-z])\\w+}").permitAll()
+				.antMatchers("/api/v1/courses/**").hasAnyRole("ADMIN", "REPRESENTATIVE")
+				.antMatchers("/api/v1/clients/**",
+						     "/api/v1/companies/**",
+						     "/api/v1/inscriptions/**", 
+						     "/api/v1/representatives/**", 
+						     "/api/v1/scholarships/**").hasRole("ADMIN")
 			.and()
 			.authorizeRequests()
 				.anyRequest().authenticated()
