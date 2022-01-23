@@ -10,9 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.ada.finalproject.courses.controllers.AdminRestController;
-import com.ada.finalproject.courses.models.Admin;
-import com.ada.finalproject.courses.repositories.AdminRepository;
-import com.ada.finalproject.courses.services.AdminService;
+import com.ada.finalproject.courses.models.User;
+import com.ada.finalproject.courses.services.UserService;
 
 @SpringBootApplication
 public class CoursesApplication {
@@ -20,11 +19,8 @@ public class CoursesApplication {
 	@Autowired
 	AdminRestController adminController;
 	
-	@Autowired 
-	AdminService adminService;
-	
 	@Autowired
-    AdminRepository adminRepository;
+	UserService userService;
 	
 	@Autowired
 	BCryptPasswordEncoder encoder;
@@ -36,10 +32,10 @@ public class CoursesApplication {
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
 		return args -> {
-			if (adminRepository.findAllActiveAdministrators().isEmpty()) {
-				Admin administrator = adminController.instantiate("administrator", "admin@appdomain.com", 
+			if (userService.count() == 0) { 
+				User administrator = adminController.instantiate("administrator", "admin@appdomain.com", 
 						encoder.encode("randompwd"));
-				adminService.save(administrator);
+				userService.save(administrator);
 			}
 		};
 	}

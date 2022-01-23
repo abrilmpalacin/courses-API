@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,12 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ada.finalproject.courses.models.Admin;
+import com.ada.finalproject.courses.models.User;
 import com.ada.finalproject.courses.models.Company;
 import com.ada.finalproject.courses.models.Course;
 import com.ada.finalproject.courses.models.Inscription;
 import com.ada.finalproject.courses.models.ScholarshipForm;
-import com.ada.finalproject.courses.services.AdminService;
+import com.ada.finalproject.courses.services.UserService;
 import com.ada.finalproject.courses.services.ClientService;
 import com.ada.finalproject.courses.services.CompanyService;
 import com.ada.finalproject.courses.services.InscriptionService;
@@ -41,7 +42,7 @@ tags = {"admin"})
 public class AdminRestController {
 
 	@Autowired 
-	AdminService adminService;
+	UserService userService;
 	
 	@Autowired 
 	ClientService clientService;
@@ -58,30 +59,31 @@ public class AdminRestController {
 	@Autowired
 	BCryptPasswordEncoder encoder;
 	
-	public Admin instantiate(String name, String email, String password) {
+	public User instantiate(String name, String email, String password) {
 		String token = getJWTToken(email);
-		Admin administrator = new Admin(name, email, password, token);
+		User administrator = new User(name, email, password, token);
 		return administrator;
 	}
+
 	
 	@ApiOperation(value = "Retrieve the administrator of the platform, admin log-in", 
 			  notes = "The operation must be carried out by the admin")
 	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Resource obtained successfully", response = Admin.class),
+			@ApiResponse(code = 200, message = "Resource obtained successfully", response = User.class),
 			@ApiResponse(code = 500, message = "Something went wrong while processing request")
 	})
 	@PostMapping("/sign-in")
-	public Admin login(@RequestParam String email, @RequestParam("password") String pwd) throws Exception {
+	public User login(@RequestParam String email, @RequestParam("password") String pwd) throws Exception {
 		String token = getJWTToken(email);
         		
-		Optional<Admin> userOpt = adminService.findByEmail(email);
+		Optional<User> userOpt = userService.findByEmail(email);
 		
 		if (userOpt.isPresent()) {
-			String pwdHash = userOpt.get().getPassword();
-			if (encoder.matches(pwd, pwdHash)) {
-				Admin admin = userOpt.get();
+			String pwdStored = userOpt.get().getPassword();
+			if (pwd != pwdStored) {
+				User admin = userOpt.get();
 				admin.setToken(token);
-				return adminService.save(admin);
+				return userService.save(admin);
 			} else {
 				throw new Exception("Invalid password entered.");
 			}
@@ -142,6 +144,7 @@ public class AdminRestController {
 			@ApiResponse(code = 200, message = "Resources obtained successfully", response = Company.class),
 			@ApiResponse(code = 500, message = "Something went wrong while processing request")
 	})
+	@PreAuthorize("hasRole('ADMIN')")  
 	@GetMapping("/requests/companies")
 	public Iterable<Company> showPendingCompanyRequests() {
 		List<Company> companies = (List<Company>) companyService.findAll();

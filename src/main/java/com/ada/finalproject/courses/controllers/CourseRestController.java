@@ -21,7 +21,6 @@ import com.ada.finalproject.courses.models.Company;
 import com.ada.finalproject.courses.models.Course;
 import com.ada.finalproject.courses.models.Inscription;
 import com.ada.finalproject.courses.models.Representative;
-import com.ada.finalproject.courses.services.AdminService;
 import com.ada.finalproject.courses.services.ClientService;
 import com.ada.finalproject.courses.services.CompanyService;
 import com.ada.finalproject.courses.services.CourseService;
@@ -42,9 +41,6 @@ public class CourseRestController {
 	
 	@Autowired
 	CourseService courseService;
-	
-	@Autowired
-	AdminService adminService;
 	
 	@Autowired
 	ClientService clientService;

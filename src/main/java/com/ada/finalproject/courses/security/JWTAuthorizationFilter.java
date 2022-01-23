@@ -1,70 +1,62 @@
 package com.ada.finalproject.courses.security;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
 
 public class JWTAuthorizationFilter extends OncePerRequestFilter {
 	private final String HEADER = "Authorization";
 	private final String PREFIX = "Bearer ";
 	private final String SECRET = "myUltraSecretKey";
+	
+	@Autowired
+	AuthenticationManager authenticationManager;
 
-	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-		try {
-			if (checkJWTToken(request, response)) {
-				Claims claims = validateToken(request);
-				if (claims.get("authorities") != null) {
-					setUpSpringAuthentication(claims);
-				} else {
-					SecurityContextHolder.clearContext();
-				}
-			} else {
-				SecurityContextHolder.clearContext();
-			}
-			chain.doFilter(request, response);
-		} catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException e) {
-			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			((HttpServletResponse) response).sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
-			return;
-		}
-	}	
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain) throws IOException, ServletException {
+        String header = request.getHeader(HEADER);
 
-	private Claims validateToken(HttpServletRequest request) {
-		String jwtToken = request.getHeader(HEADER).replace(PREFIX, "");
-		return Jwts.parser().setSigningKey(SECRET.getBytes()).parseClaimsJws(jwtToken).getBody();
-	}
+        if (header == null) {
+            chain.doFilter(request, response);
+            return;
+        }
 
-	private void setUpSpringAuthentication(Claims claims) {
-		@SuppressWarnings("unchecked")
-		List<String> authorities = (List<String>) claims.get("authorities");
+        UsernamePasswordAuthenticationToken authentication = authenticate(request);
 
-		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null,
-				authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
-		SecurityContextHolder.getContext().setAuthentication(auth);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        chain.doFilter(request, response);
+    }
 
-	}
-
-	private boolean checkJWTToken(HttpServletRequest request, HttpServletResponse res) {
-		String authenticationHeader = request.getHeader(HEADER);
-		if (authenticationHeader == null || !authenticationHeader.startsWith(PREFIX))
-			return false;
-		return true;
-	}
+    private UsernamePasswordAuthenticationToken authenticate(HttpServletRequest request) {
+        String token = request.getHeader(HEADER).replace(PREFIX, "");
+        		
+        Claims claims = Jwts.parser()
+        					.setSigningKey(SECRET.getBytes())
+        					.parseClaimsJws(token.replaceAll("\"", ""))
+        					.getBody();
+        
+		List<SimpleGrantedAuthority> authorities = new ArrayList<>();		
+		int length = claims.get("authorities").toString().length();
+		String role = claims.get("authorities").toString().substring(1, length - 1);		
+		SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
+		authorities.add(authority);
+		
+		return new UsernamePasswordAuthenticationToken(claims, null, authorities);
+    }
 }
