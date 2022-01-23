@@ -58,7 +58,7 @@ public class Inscription {
 	        required = false)
 	@Nullable
 	@JsonManagedReference
-	@OneToOne(mappedBy = "inscription", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToOne(mappedBy = "inscription", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JsonIncludeProperties({"id"})
 	private ScholarshipForm scholarshipForm = null;
 	

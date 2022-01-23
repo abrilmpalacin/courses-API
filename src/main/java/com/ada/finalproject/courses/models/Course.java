@@ -140,7 +140,7 @@ public class Course {
 			dataType = "Inscription",
 	        required = false)
 	@Nullable
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "FK_course_id")
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private List<Inscription> inscriptions = new ArrayList<>();
