@@ -57,18 +57,17 @@ public class ClientRestController {
 	@PostMapping("/sign-up")
 	public Client register(@RequestBody Client newClient) throws Exception {
 		String token = getJWTToken(newClient.getEmail());
-		    
-		Optional<Client> userOpt = clientService.findByEmail(newClient.getEmail());
 		
-		if (userOpt.isEmpty()) {	
-			String pwdHash = encoder.encode(newClient.getPassword());
-			newClient.setPassword(pwdHash);	
-			newClient.setToken(token);
-		    return clientService.save(newClient);
-		} else {
-			throw new Exception("Account already exists.");
-		}
-	} 
+		Optional<Client> optUser = clientService.findByEmail(newClient.getEmail());
+		
+		throwExceptionIfUserAlreadyExists(optUser);
+		
+		newClient.setToken(token);
+		String pwdHash = encoder.encode(newClient.getPassword());
+		newClient.setPassword(pwdHash);
+		
+		return clientService.save(newClient);
+	}
 	
 	@ApiOperation(value = "Retrieve a client, client log-in", 
 			  notes = "The operation must be carried out by a client")
@@ -80,20 +79,17 @@ public class ClientRestController {
 	public Client login(@RequestParam String email, @RequestParam("password") String pwd) throws Exception {
 		String token = getJWTToken(email);
 		
-		Optional<Client> userOpt = clientService.findByEmail(email);
+		Optional<Client> optUser = clientService.findByEmail(email);
 		
-		if (userOpt.isPresent()) {
-			String pwdHash = userOpt.get().getPassword();
-			if (encoder.matches(pwd, pwdHash)) {
-				Client client = userOpt.get();
-				client.setToken(token);
-				return clientService.save(client);
-			} else {
-				throw new Exception("Invalid password entered.");
-			}
-		} else {
-			throw new Exception("Account not registered. Please, sign-up.");
+		throwExceptionIfUserNotRegistered(optUser);
+		
+		Client client = optUser.get();
+		client.setToken(token);
+		
+		if (!clientService.isValidPassword(pwd, client)) {
+			throw new Exception("Invalid password entered.");
 		}
+		return clientService.save(client);
 	}
 		
 	@ApiOperation(value = "Retrieve all client")
@@ -161,6 +157,18 @@ public class ClientRestController {
 	public void deleteClient(@PathVariable int id) {
 		clientService.deleteById(id);
 	}	
+	
+	public void throwExceptionIfUserAlreadyExists(Optional<Client> optUser) throws Exception {
+		if (optUser.isPresent()) {
+			throw new Exception("Account already exists.");
+		}
+	} 
+	
+	public void throwExceptionIfUserNotRegistered(Optional<Client> optUser) throws Exception {
+		if (optUser.isEmpty()) {
+			throw new Exception("Account not registered. Please, sign-up.");
+		}
+	}
 	
 	private String getJWTToken(String email) {
 		String secretKey = "myUltraSecretKey";

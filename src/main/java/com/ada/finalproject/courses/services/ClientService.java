@@ -3,6 +3,7 @@ package com.ada.finalproject.courses.services;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ada.finalproject.courses.models.Client;
@@ -14,7 +15,10 @@ public class ClientService {
 	@Autowired
 	ClientRepository clientRepository;
 	
-	public Client save(Client entity) {
+	@Autowired
+	BCryptPasswordEncoder encoder;
+	
+	public Client save(Client entity) {	
 		return clientRepository.save(entity);
 	}
 	
@@ -64,6 +68,14 @@ public class ClientService {
 	
 	public void deleteAll() {
 		clientRepository.deleteAll();
+	}
+	
+	public boolean isValidPassword(String pwd, Client client) throws Exception {
+		String pwdHash = client.getPassword();
+		if (encoder.matches(pwd, pwdHash)) {
+			return true;
+		}
+		return false;
 	}
 	
 }

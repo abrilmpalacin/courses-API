@@ -1,6 +1,6 @@
 package com.ada.finalproject.courses.models;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.CascadeType;
@@ -32,7 +32,7 @@ public class Client extends User {
 			example = "pwd123",
 			required = true)
 	@NotNull
-	private Date birthDate;
+	private LocalDate birthDate;
 	
 	@ApiModelProperty(
 			position = 5,
@@ -63,11 +63,24 @@ public class Client extends User {
 	@JsonIncludeProperties({"id", "course"})
 	private List<Inscription> inscriptions = new ArrayList<>();
 	
-	public Date getBirthDate() {
+	public Client() {
+		
+	}
+	
+	public Client(@NotNull @NotEmpty String fullName, @NotNull @NotEmpty String email, 
+			@NotNull @NotEmpty String password, @NotNull @NotEmpty String token, 
+			@NotNull LocalDate birthDate, @NotNull @NotEmpty String gender, @NotNull @NotEmpty String adress) {
+		super(fullName, email, password, token);
+		this.birthDate = birthDate;
+		this.gender = gender;
+		this.adress = adress;
+	}
+
+	public LocalDate getBirthDate() {
 		return birthDate;
 	}
 
-	public void setBirthDate(Date birthDate) {
+	public void setBirthDate(LocalDate birthDate) {
 		this.birthDate = birthDate;
 	}
 
